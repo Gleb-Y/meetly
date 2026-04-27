@@ -1,0 +1,413 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum BanSource {
+  NONE
+  REPORTS
+  ADMIN
+}
+
+/// Кто видит число друзей на чужом профиле (GET /users/:userId).
+enum FriendsCountVisibility {
+  EVERYONE
+  FRIENDS_ONLY
+  NOONE
+}
+
+enum VerificationDeliveryChannel {
+  SMS
+  TELEGRAM_GATEWAY
+}
+
+model User {
+  id                String             @id @default(uuid())
+  avatar            String?
+  phoneNumber       String?            @unique
+  isActive          Boolean            @default(true)
+  bannedUntil       DateTime?
+  banSource         BanSource          @default(NONE)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  age               Int?
+  bio               String?
+  interests         String[]
+  username          String?            @unique
+  rating                 Float              @default(5)
+  totalAttended          Int                @default(0)
+  organizerRating        Float              @default(0)
+  organizerRatingCount   Int                @default(0)
+  friendsCountVisibility FriendsCountVisibility @default(EVERYONE)
+  /// Показывать ли блок друзей / общих друзей на профиле для других пользователей.
+  showFriendsInProfile   Boolean                @default(true)
+  /// Закрытый профиль: не-друзья видят только ник и аватар до принятия заявки в друзья.
+  isProfileClosed        Boolean                @default(false)
+  eventParticipants      EventParticipant[]
+  events                 Event[]
+  eventJoinRequests      EventJoinRequest[]
+  eventKicks             EventKick[]
+  readMessages           MessageRead[]
+  messages               Message[]
+  reactions              Reaction[]
+  verificationCodes      VerificationCode[]
+  attendances            Attendance[]
+  givenOrgRatings        OrganizerRating[]  @relation("RaterOrgRatings")
+  receivedOrgRatings     OrganizerRating[]  @relation("TargetOrgRatings")
+  sentFriendRequests     FriendRequest[]    @relation("SentFriendRequests")
+  receivedFriendRequests FriendRequest[]    @relation("ReceivedFriendRequests")
+  friendships            Friendship[]       @relation("UserFriendships")
+  friendOf               Friendship[]       @relation("FriendFriendships")
+  reportsCreated         Report[]           @relation("ReportReporter")
+  reportsReceived        Report[]           @relation("ReportTarget")
+  pushTokens             PushToken[]
+  chatSettings           ChatUserSettings[]
+
+  @@map("users")
+}
+
+model PushToken {
+  id            String       @id @default(uuid())
+  userId        String
+  token         String       @unique
+  platform      PushPlatform
+  isActive      Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  lastSeenAt    DateTime     @default(now())
+  lastErrorCode String?
+  lastErrorAt   DateTime?
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isActive])
+  @@index([updatedAt])
+  @@map("push_tokens")
+}
+
+model VerificationCode {
+  id                 String                       @id @default(uuid())
+  identifier         String
+  code               String
+  expiresAt          DateTime
+  verified           Boolean                      @default(false)
+  createdAt          DateTime                     @default(now())
+  userId             String?
+  deliveryChannel    VerificationDeliveryChannel?
+  telegramRequestId  String?
+  user               User?                        @relation(fields: [userId], references: [id])
+
+  @@index([identifier])
+  @@map("verification_codes")
+}
+
+model Event {
+  id                String             @id @default(uuid())
+  eventName         String             @db.VarChar(30)
+  description       String
+  category          EventCategory
+  customCategoryName    String?
+  customCategoryIconUrl String?
+  photoUrl              String?
+  photoUrls             String[]           @default([])
+  date              DateTime
+  isAllDay          Boolean            @default(false)
+  startTime         DateTime?
+  endTime           DateTime?
+  locationName      String
+  locationAddress   String
+  locationLatitude  Float
+  locationLongitude Float
+  visibility        EventVisibility    @default(PUBLIC)
+  maxParticipants   Int
+  isActive          Boolean            @default(true)
+  status            EventStatus        @default(ACTIVE)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  creatorId         String
+  chat              Chat?
+  participants      EventParticipant[]
+  joinRequests      EventJoinRequest[]
+  kicks             EventKick[]
+  attendances       Attendance[]
+  organizerRatings  OrganizerRating[]
+  creator           User               @relation(fields: [creatorId], references: [id])
+  reports           Report[]
+
+  @@index([category])
+  @@index([visibility])
+  @@index([status])
+  @@map("events")
+}
+
+model EventParticipant {
+  id       String   @id @default(uuid())
+  joinedAt DateTime @default(now())
+  eventId  String
+  userId   String
+  event    Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+  @@index([eventId])
+  @@index([userId])
+  @@map("event_participants")
+}
+
+model Chat {
+  id              String    @id @default(uuid())
+  eventId         String    @unique
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  lastMessageId   String?   @unique
+  lastMessageAt   DateTime?
+  event           Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  messages        Message[] @relation("ChatMessages")
+  lastMessage     Message?  @relation("ChatLastMessage", fields: [lastMessageId], references: [id], onDelete: SetNull)
+  userSettings    ChatUserSettings[]
+
+  @@index([lastMessageAt(sort: Desc)])
+  @@map("chats")
+}
+
+model ChatUserSettings {
+  id        String   @id @default(uuid())
+  userId    String
+  chatId    String
+  isMuted   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, chatId])
+  @@index([userId])
+  @@index([chatId])
+  @@map("chat_user_settings")
+}
+
+model Message {
+  id              String        @id @default(uuid())
+  chatId          String
+  senderId        String
+  content         String
+  imageUrl        String?
+  audioUrl        String?
+  audioDurationMs Int?
+  audioMimeType   String?
+  audioSizeBytes  Int?
+  isSystem        Boolean       @default(false)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  replyToId       String?
+  replyTo         Message?      @relation("MessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies         Message[]     @relation("MessageReplies")
+  readBy          MessageRead[]
+  reactions       Reaction[]
+  chat            Chat          @relation("ChatMessages", fields: [chatId], references: [id], onDelete: Cascade)
+  sender          User          @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  chatAsLast      Chat?         @relation("ChatLastMessage")
+
+  @@index([chatId, createdAt(sort: Desc)])
+  @@index([replyToId])
+  @@map("messages")
+}
+
+model MessageRead {
+  id        String   @id @default(uuid())
+  messageId String
+  userId    String
+  readAt    DateTime @default(now())
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@index([userId, readAt(sort: Desc)])
+  @@map("message_reads")
+}
+
+model Reaction {
+  id        String   @id @default(uuid())
+  messageId String
+  userId    String
+  emoji     String   @db.VarChar(8)
+  createdAt DateTime @default(now())
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@index([messageId])
+  @@map("reactions")
+}
+
+model EventJoinRequest {
+  id        String                  @id @default(uuid())
+  eventId   String
+  userId    String
+  status    EventJoinRequestStatus  @default(PENDING)
+  createdAt DateTime                @default(now())
+  updatedAt DateTime                @updatedAt
+  event     Event                   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user      User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+  @@index([eventId, status])
+  @@index([userId, status])
+  @@map("event_join_requests")
+}
+
+model EventKick {
+  id        String   @id @default(uuid())
+  eventId   String
+  userId    String
+  createdAt DateTime @default(now())
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+  @@index([userId])
+  @@map("event_kicks")
+}
+
+model FriendRequest {
+  id         String              @id @default(uuid())
+  senderId   String
+  receiverId String
+  status     FriendRequestStatus @default(PENDING)
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+  sender     User                @relation("SentFriendRequests", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver   User                @relation("ReceivedFriendRequests", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@unique([senderId, receiverId])
+  @@index([receiverId, status])
+  @@index([senderId, status])
+  @@map("friend_requests")
+}
+
+model Friendship {
+  id        String   @id @default(uuid())
+  userId    String
+  friendId  String
+  createdAt DateTime @default(now())
+  user      User     @relation("UserFriendships", fields: [userId], references: [id], onDelete: Cascade)
+  friend    User     @relation("FriendFriendships", fields: [friendId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, friendId])
+  @@map("friendships")
+}
+
+enum FriendRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum EventJoinRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum EventCategory {
+  party
+  sports
+  hoops
+  bar
+  food
+  music
+  art
+  outdoor
+  custom
+}
+
+enum EventVisibility {
+  PUBLIC
+  PRIVATE
+}
+
+enum EventStatus {
+  ACTIVE
+  COMPLETED
+  FINALIZED
+}
+
+enum AttendanceStatus {
+  JOINED
+  LEFT
+  CONFIRMED
+}
+
+enum PushPlatform {
+  android
+  ios
+  web
+}
+
+model Attendance {
+  id        String           @id @default(uuid())
+  userId    String
+  eventId   String
+  status    AttendanceStatus @default(JOINED)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event     Event            @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+  @@index([eventId, status])
+  @@index([userId])
+  @@map("attendances")
+}
+
+model OrganizerRating {
+  id        String   @id @default(uuid())
+  eventId   String
+  raterId   String
+  targetId  String
+  score     Int
+  createdAt DateTime @default(now())
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  rater     User     @relation("RaterOrgRatings", fields: [raterId], references: [id], onDelete: Cascade)
+  target    User     @relation("TargetOrgRatings", fields: [targetId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, raterId])
+  @@index([targetId])
+  @@map("organizer_ratings")
+}
+
+enum ReportType {
+  INAPPROPRIATE_CONTENT
+  NO_SHOW_ABUSE
+  HARASSMENT
+  FAKE_EVENT
+  OTHER
+}
+
+enum ReportStatus {
+  PENDING
+  RESOLVED
+  DISMISSED
+}
+
+model Report {
+  id            String       @id @default(uuid())
+  reporterId    String
+  targetUserId  String
+  eventId       String?
+  reason        ReportType
+  description   String?      @db.VarChar(500)
+  status        ReportStatus @default(PENDING)
+  createdAt     DateTime     @default(now())
+  reporter      User         @relation("ReportReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  targetUser    User         @relation("ReportTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
+  event         Event?       @relation(fields: [eventId], references: [id], onDelete: SetNull)
+
+  @@index([reporterId, targetUserId, createdAt])
+  @@index([targetUserId, status])
+  @@index([status])
+  @@map("reports")
+}
