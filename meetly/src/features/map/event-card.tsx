@@ -1,4 +1,4 @@
-import type { EventResponse } from "@/src/entities/api/events/events.types";
+import type { Event } from "@/src/entities/api/events/events.types";
 import { colors } from "@/src/shared/theme/colors";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -16,7 +16,7 @@ import { BlurView } from "expo-blur";
 import { useJoinEvent } from "@/src/entities/api/events/events.queries";
 
 type Props = {
-  event: EventResponse;
+  event: Event;
   onClose: () => void;
 };
 
@@ -114,7 +114,7 @@ export function SelectedEventCard({ event, onClose }: Props) {
               color={colors.accentTurquoise}
             />
             <Text style={styles.addressText} numberOfLines={1}>
-              {event.address}
+              {event.location.address}
             </Text>
             <Pressable onPress={onClose} style={styles.topCloseButton}>
               <Ionicons name="close" size={20} color={colors.textSecondary} />

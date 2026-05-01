@@ -486,6 +486,83 @@ export class EventsService {
     return { message: 'Event deleted successfully' };
   }
 
+  /**
+   * Организатор может вручную завершить событие (не ждать автоматического завершения)
+   */
+  async completeEvent(eventId: string, userId: string) {
+    const event = await this.prisma.event.findUnique({
+      where: { id: eventId },
+      select: {
+        id: true,
+        creatorId: true,
+        status: true,
+        eventName: true,
+        chat: { select: { id: true } },
+        participants: { select: { userId: true } },
+      },
+    });
+
+    if (!event) throw new NotFoundException('Event not found');
+    if (event.creatorId !== userId)
+      throw new ForbiddenException('Only creator can complete event');
+    if (event.status !== EventStatus.ACTIVE)
+      throw new BadRequestException('Only active events can be completed');
+
+    // Изменяем статус на COMPLETED
+    const updated = await this.prisma.event.update({
+      where: { id: eventId },
+      data: { status: EventStatus.COMPLETED },
+      include: buildEventInclude(true),
+    });
+
+    // Отправляем уведомление в чат если он есть
+    if (event.chat) {
+      try {
+        await this.chatGateway.broadcastSystemMessage(
+          event.chat.id,
+          userId,
+          'Событие завершено организатором. У вас есть 2 часа для отметки присутствия.',
+        );
+
+        this.chatGateway.server
+          .to(`chat:${event.chat.id}`)
+          .emit('chatStatusChanged', {
+            chatId: event.chat.id,
+            eventId: event.id,
+            status: 'COMPLETED',
+          });
+      } catch (e) {
+        this.logger.error(
+          `Failed to notify chat for event ${eventId}: ${e.message}`,
+        );
+      }
+    }
+
+    // Уведомляем участников на фронтенде в реальном времени
+    const participantIds = event.participants.map((p) => p.userId);
+    if (participantIds.length > 0) {
+      const socketPayload = {
+        type: 'EVENT_COMPLETED_BY_ORGANIZER',
+        eventId: event.id,
+        eventName: event.eventName,
+        chatId: event.chat?.id ?? null,
+        timestamp: new Date().toISOString(),
+      };
+
+      for (const participantId of participantIds) {
+        this.notificationsGateway.sendToUser(
+          participantId,
+          'eventStatusChanged',
+          socketPayload,
+        );
+      }
+    }
+
+    this.sendProfileEventsUpdated(userId);
+
+    return updated;
+  }
+
   async joinEvent(eventId: string, userId: string) {
     const event = await this.prisma.event.findUnique({
       where: { id: eventId },

@@ -1,10 +1,10 @@
-import type { EventResponse } from "@/src/entities/api/events/events.types";
+import type { Event } from "@/src/entities/api/events/events.types";
 import { colors } from "@/src/shared/theme/colors";
 import React from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
 
 type Props = {
-  event: EventResponse;
+  event: Event;
   isSelected: boolean;
 };
 

@@ -27,6 +27,7 @@ export type Event = {
   visibility: "PUBLIC" | "PRIVATE";
   isPrivate: boolean; // Convenience field: true when visibility === "PRIVATE"
   category: EventCategory;
+  status: "ACTIVE" | "COMPLETED" | "FINALIZED"; // Статус события
   maxParticipants: number;
   participantsCount: number;
   creatorId: string;

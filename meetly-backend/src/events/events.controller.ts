@@ -266,6 +266,16 @@ export class EventsController {
   }
 
   /**
+   * POST /api/events/:id/complete — завершить событие вручную (только создатель)
+   * Организатор может развершить активное событие в любой момент
+   */
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/complete')
+  complete(@Param('id') id: string, @Request() req: AuthenticatedRequest) {
+    return this.eventsService.completeEvent(id, req.user.id);
+  }
+
+  /**
    * POST /api/events/:id/kick — выгнать участника (только создатель)
    * Body: { userId: string }
    */

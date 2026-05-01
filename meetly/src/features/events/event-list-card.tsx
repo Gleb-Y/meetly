@@ -1,12 +1,12 @@
-import type { EventResponse } from "@/src/entities/api/events/events.types";
+import type { Event } from "@/src/entities/api/events/events.types";
 import { colors } from "@/src/shared/theme/colors";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 
 type EventListCardProps = {
-  event: EventResponse;
-  onPress: (event: EventResponse) => void;
+  event: Event;
+  onPress: (event: Event) => void;
 };
 
 const CATEGORY_CONFIG = {
@@ -46,7 +46,7 @@ export function EventListCard({ event, onPress }: EventListCardProps) {
           </Text>
           <Text style={styles.category}>{config.label}</Text>
 
-          {event.address && (
+          {event.location.address && (
             <View style={styles.addressContainer}>
               <Ionicons
                 name="location-outline"
@@ -54,7 +54,7 @@ export function EventListCard({ event, onPress }: EventListCardProps) {
                 color={colors.textSecondary}
               />
               <Text style={styles.address} numberOfLines={1}>
-                {event.address}
+                {event.location.address}
               </Text>
             </View>
           )}

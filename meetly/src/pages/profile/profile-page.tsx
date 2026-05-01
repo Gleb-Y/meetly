@@ -40,8 +40,10 @@ export default function ProfileScreen() {
   };
 
   const handleLogout = () => {
-    AsyncStorage.removeItem("authToken").then(() => {
-      router.replace("/(auth)/welcome");
+    AsyncStorage.removeItem("access_token").then(() => {
+      AsyncStorage.removeItem("user").then(() => {
+        router.replace("/(auth)/welcome");
+      });
     });
   };
 
@@ -179,9 +181,12 @@ export default function ProfileScreen() {
             </View>
           )}
         </View>
-        {/* <Pressable onPress={handleLogout}>
-          <Text style={styles.ageText}>выйти</Text>
-        </Pressable> */}
+
+        {/* Logout Button */}
+        <Pressable onPress={handleLogout} style={styles.logoutButton}>
+          <Ionicons name="log-out-outline" size={20} color="#FF4444" />
+          <Text style={styles.logoutButtonText}>Выйти из аккаунта</Text>
+        </Pressable>
       </ScrollView>
     </MainLayout>
   );
@@ -189,20 +194,30 @@ export default function ProfileScreen() {
 
 function getInterestLabel(interest: string): string {
   const labels: Record<string, string> = {
-    party: "Вечеринки",
-    gym: "Спорт",
-    basketball: "Баскетбол",
-    cocktail: "Бары",
+    food: "Еда",
+    sport: "Спорт",
+    music: "Музыка",
+    art: "Искусство",
+    travel: "Путешествия",
+    photo: "Фотография",
+    games: "Игры",
+    reading: "Чтение",
+    cinema: "Кино",
   };
   return labels[interest] || interest;
 }
 
 function getInterestIcon(interest: string) {
   const icons: Record<string, any> = {
-    party: require("@assets/images/map-icons/disco.png"),
-    gym: require("@assets/images/map-icons/dumbbell.png"),
-    basketball: require("@assets/images/map-icons/basketball.png"),
-    cocktail: require("@assets/images/map-icons/cocktail.png"),
+    food: require("@assets/images/map-icons/disco.png"),
+    sport: require("@assets/images/map-icons/dumbbell.png"),
+    music: require("@assets/images/map-icons/disco.png"),
+    art: require("@assets/images/map-icons/disco.png"),
+    travel: require("@assets/images/map-icons/disco.png"),
+    photo: require("@assets/images/map-icons/disco.png"),
+    games: require("@assets/images/map-icons/basketball.png"),
+    reading: require("@assets/images/map-icons/disco.png"),
+    cinema: require("@assets/images/map-icons/cocktail.png"),
   };
   return icons[interest];
 }
@@ -395,5 +410,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     color: colors.textPrimary,
+  },
+  logoutButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255, 68, 68, 0.1)",
+    borderWidth: 1,
+    borderColor: "#FF4444",
+    borderRadius: 12,
+    paddingVertical: 14,
+    marginTop: 24,
+    gap: 8,
+  },
+  logoutButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#FF4444",
   },
 });

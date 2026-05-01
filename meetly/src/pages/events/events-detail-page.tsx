@@ -2,8 +2,10 @@ import {
   useEvent,
   useJoinEvent,
 } from "@/src/entities/api/events/events.queries";
+import { useProfile } from "@/src/entities/api/user/user.query";
 import { colors } from "@/src/shared/theme/colors";
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -42,9 +44,11 @@ const CATEGORY_ICONS: Record<string, any> = {
 export default function EventDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { data: event, isLoading } = useEvent(id!);
+  const { data: event, isLoading, refetch } = useEvent(id!);
+  const { data: profile } = useProfile();
   const joinEventMutation = useJoinEvent();
   const [isJoining, setIsJoining] = useState(false);
+  const [isCompleting, setIsCompleting] = useState(false);
 
   if (isLoading) {
     return (
@@ -111,6 +115,56 @@ export default function EventDetailScreen() {
           onPress: () => {
             // TODO: Реализовать логику отправки запроса
             Alert.alert("Успех! ✉️", "Запрос отправлен организатору");
+          },
+        },
+      ]
+    );
+  };
+
+  const handleCompleteEvent = async () => {
+    Alert.alert(
+      "Завершить событие?",
+      "Это действие нельзя отменить. Все участники получат уведомление.",
+      [
+        { text: "Отмена", style: "cancel" },
+        {
+          text: "Завершить",
+          style: "destructive",
+          onPress: async () => {
+            setIsCompleting(true);
+            try {
+              const response = await fetch(
+                `http://192.168.1.16:3000/api/events/${id}/complete`,
+                {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${await AsyncStorage.getItem("access_token")}`,
+                  },
+                }
+              );
+
+              if (response.ok) {
+                Alert.alert("Успех! ✅", "Событие завершено", [
+                  {
+                    text: "OK",
+                    onPress: () => {
+                      refetch();
+                      router.back();
+                    },
+                  },
+                ]);
+              } else {
+                Alert.alert("Ошибка", "Не удалось завершить событие");
+              }
+            } catch (error: any) {
+              Alert.alert(
+                "Ошибка",
+                error.message || "Не удалось завершить событие"
+              );
+            } finally {
+              setIsCompleting(false);
+            }
           },
         },
       ]
@@ -194,7 +248,7 @@ export default function EventDetailScreen() {
 
             <View style={styles.organizerDetails}>
               <Text style={styles.organizerName}>
-                {event.creator.firstName || "Аноним"}
+                {event.creator.username || "Аноним"}
               </Text>
               {event.creator.username && (
                 <Text style={styles.organizerUsername}>
@@ -319,24 +373,60 @@ export default function EventDetailScreen() {
 
       {/* Bottom Action Button */}
       <View style={styles.bottomContainer}>
-        <Pressable
-          onPress={handleAction}
-          disabled={isJoining}
-          style={[
-            styles.actionButton,
-            { backgroundColor: buttonConfig.color },
-            isJoining && styles.actionButtonDisabled,
-          ]}
-        >
-          {isJoining ? (
-            <ActivityIndicator size="small" color="#FFFFFF" />
-          ) : (
-            <>
-              <Ionicons name={buttonConfig.icon} size={20} color="#FFFFFF" />
-              <Text style={styles.actionButtonText}>{buttonConfig.text}</Text>
-            </>
-          )}
-        </Pressable>
+        {/* Кнопка завершения события для организатора */}
+        {profile?.id === event.creatorId && event.status === "ACTIVE" && (
+          <Pressable
+            onPress={handleCompleteEvent}
+            disabled={isCompleting}
+            style={[
+              styles.completeButton,
+              isCompleting && styles.completeButtonDisabled,
+            ]}
+          >
+            {isCompleting ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <>
+                <Ionicons name="checkmark-done" size={20} color="#FFFFFF" />
+                <Text style={styles.completeButtonText}>Завершить</Text>
+              </>
+            )}
+          </Pressable>
+        )}
+
+        {/* Основная кнопка - присоединение или запрос */}
+        {event.status === "ACTIVE" && profile?.id !== event.creatorId && (
+          <Pressable
+            onPress={handleAction}
+            disabled={isJoining}
+            style={[
+              styles.actionButton,
+              { backgroundColor: buttonConfig.color },
+              isJoining && styles.actionButtonDisabled,
+            ]}
+          >
+            {isJoining ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <>
+                <Ionicons name={buttonConfig.icon} size={20} color="#FFFFFF" />
+                <Text style={styles.actionButtonText}>{buttonConfig.text}</Text>
+              </>
+            )}
+          </Pressable>
+        )}
+
+        {/* Статус если событие не активно */}
+        {event.status !== "ACTIVE" && (
+          <View
+            style={[
+              styles.actionButton,
+              { backgroundColor: colors.buttonDisabled },
+            ]}
+          >
+            <Text style={styles.actionButtonText}>Событие завершено</Text>
+          </View>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -620,6 +710,29 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   actionButtonText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#FFFFFF",
+  },
+  completeButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 16,
+    paddingVertical: 16,
+    gap: 10,
+    backgroundColor: "#EF4444",
+    marginBottom: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  completeButtonDisabled: {
+    opacity: 0.6,
+  },
+  completeButtonText: {
     fontSize: 16,
     fontWeight: "700",
     color: "#FFFFFF",

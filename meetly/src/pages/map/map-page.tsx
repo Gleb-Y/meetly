@@ -1,5 +1,5 @@
 import { useEvents } from "@/src/entities/api/events/events.queries";
-import type { EventResponse } from "@/src/entities/api/events/events.types";
+import type { Event } from "@/src/entities/api/events/events.types";
 import { ALMATY_REGION } from "@/src/shared/lib/data/db";
 import { MapControls } from "@/src/shared/ui/map-controls";
 import { FullscreenLayout } from "@/src/widgets/layout/full-screen-layout";
@@ -52,8 +52,8 @@ export default function MapScreen() {
         console.log("🎯 Auto-selecting event:", event.title);
         setSelectedEventId(event.id);
         animateToRegion({
-          latitude: event.latitude,
-          longitude: event.longitude,
+          latitude: event.location.latitude,
+          longitude: event.location.longitude,
           latitudeDelta: 0.02,
           longitudeDelta: 0.02,
         });
@@ -105,14 +105,14 @@ export default function MapScreen() {
   }, [region, animateToRegion]);
 
   const handleSelectEvent = useCallback(
-    (event: EventResponse) => {
+    (event: Event) => {
       console.log("📍 Selecting event:", event.title);
       setSelectedEventId((prevId) => {
         if (prevId === event.id) return prevId;
 
         animateToRegion({
-          latitude: event.latitude,
-          longitude: event.longitude,
+          latitude: event.location.latitude,
+          longitude: event.location.longitude,
           latitudeDelta: 0.02,
           longitudeDelta: 0.02,
         });
@@ -138,15 +138,15 @@ export default function MapScreen() {
             console.log(
               "🗺️ Rendering marker for:",
               event.title,
-              event.latitude,
-              event.longitude
+              event.location.latitude,
+              event.location.longitude
             );
             return (
               <Marker
                 key={event.id}
                 coordinate={{
-                  latitude: event.latitude,
-                  longitude: event.longitude,
+                  latitude: event.location.latitude,
+                  longitude: event.location.longitude,
                 }}
                 anchor={{ x: 0.5, y: 1 }}
               >

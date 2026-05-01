@@ -1,5 +1,5 @@
 import { useEvents } from "@/src/entities/api/events/events.queries";
-import type { EventResponse } from "@/src/entities/api/events/events.types";
+import type { Event } from "@/src/entities/api/events/events.types";
 import { EventFilters } from "@/src/features/events/event-filters";
 import { EventListCard } from "@/src/features/events/event-list-card";
 import { EventSearch } from "@/src/features/events/event-search";
@@ -44,7 +44,7 @@ export default function EventsScreen() {
       filtered = filtered.filter(
         (event) =>
           event.title.toLowerCase().includes(query) ||
-          event.address?.toLowerCase().includes(query) ||
+          event.location.address?.toLowerCase().includes(query) ||
           event.description?.toLowerCase().includes(query)
       );
     }
@@ -52,7 +52,7 @@ export default function EventsScreen() {
     return filtered;
   }, [events, searchQuery, selectedCategory]);
 
-  const handleEventPress = (event: EventResponse) => {
+  const handleEventPress = (event: Event) => {
     router.push({
       pathname: "/(tabs)/map",
       params: { eventId: event.id },

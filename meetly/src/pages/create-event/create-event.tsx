@@ -77,20 +77,17 @@ export default function CreateEventScreen() {
       },
       {
         onSuccess: (data) => {
-          console.log("Успех", "Ивент создан!", [
+          Alert.alert("Успех! 🎉", "Ивент создан", [
             {
               text: "OK",
               onPress: () => {
-                router.replace({
-                  pathname: "/(tabs)/map",
-                  params: { eventId: data.id },
-                });
+                router.push("/(tabs)/map");
               },
             },
           ]);
         },
         onError: (error: any) => {
-          console.log(
+          Alert.alert(
             "Ошибка",
             error.response?.data?.message || "Не удалось создать ивент"
           );

@@ -25,6 +25,7 @@ function transformEventResponse(data: any): Event {
     visibility: visibility,
     isPrivate: visibility === "PRIVATE",
     category: data.category,
+    status: data.status || "ACTIVE",
     maxParticipants: data.maxParticipants,
     participantsCount: data.participantsCount || 0,
     creatorId: data.creatorId,
