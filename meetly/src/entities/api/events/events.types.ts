@@ -2,9 +2,14 @@ import type { UserProfile } from "../user/user.types";
 
 export enum EventCategory {
   PARTY = "party",
-  GYM = "gym",
-  BASKETBALL = "basketball",
-  COCKTAIL = "cocktail",
+  SPORTS = "sports",
+  HOOPS = "hoops",
+  BAR = "bar",
+  FOOD = "food",
+  MUSIC = "music",
+  ART = "art",
+  OUTDOOR = "outdoor",
+  CUSTOM = "custom",
 }
 
 // 👇 Основная структура ивента

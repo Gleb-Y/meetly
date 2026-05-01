@@ -133,7 +133,7 @@ export class UsersService {
       return {
         id: lite.id,
         username: lite.username,
-        avatar: lite.avatar,
+        avatar: this.buildFullAvatarUrl(lite.avatar),
         fullProfileVisibleToViewer: false,
         friendsListVisibleToViewer: false,
         friendsCount: null,
@@ -238,7 +238,7 @@ export class UsersService {
   /** Search users by username */
   async searchByUsername(query: string, limit = 10) {
     const now = new Date();
-    return this.prisma.user.findMany({
+    const results = await this.prisma.user.findMany({
       where: {
         username: { contains: query, mode: 'insensitive' },
         isActive: true,
@@ -247,6 +247,11 @@ export class UsersService {
       select: { id: true, username: true, avatar: true },
       take: limit,
     });
+
+    return results.map((user) => ({
+      ...user,
+      avatar: this.buildFullAvatarUrl(user.avatar),
+    }));
   }
 
   /** Full user row for admin panel (any user id, including inactive / banned). */
@@ -408,6 +413,15 @@ export class UsersService {
   }
 
   /**
+   * Convert relative avatar URLs to full URLs for frontend
+   */
+  private buildFullAvatarUrl(avatarUrl: string | null): string | null {
+    if (!avatarUrl) return null;
+    if (avatarUrl.startsWith('http')) return avatarUrl;
+    return `${process.env.API_URL || 'http://192.168.1.16:3000'}${avatarUrl}`;
+  }
+
+  /**
    * Splits raw DB data into `createdEvents` and `participatingEvents`,
    * deduplicating events where the creator is also a participant.
    * Adds organizerRatingsReceived and attendanceHistory for karma display.
@@ -472,6 +486,7 @@ export class UsersService {
 
     return {
       ...profile,
+      avatar: this.buildFullAvatarUrl((profile as any).avatar as string | null),
       createdEvents,
       participatingEvents,
       createdEventsCount: createdEvents.length,

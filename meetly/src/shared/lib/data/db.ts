@@ -1,6 +1,6 @@
 import type { Region } from "react-native-maps";
 
-export type EventCategory = "party" | "gym" | "basketball" | "cocktail";
+export type EventCategory = "party" | "sports" | "hoops" | "bar" | "food" | "music" | "art" | "outdoor" | "custom";
 
 export type EventMarkerData = {
   id: string;

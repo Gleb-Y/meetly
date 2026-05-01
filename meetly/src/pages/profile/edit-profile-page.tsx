@@ -34,7 +34,6 @@ export default function EditProfileScreen() {
 
   const [formData, setFormData] = useState({
     username: profile?.username || "",
-    firstName: profile?.firstName || "",
     bio: profile?.bio || "",
     age: profile?.age?.toString() || "",
     avatar: profile?.avatar || null,
@@ -50,10 +49,8 @@ export default function EditProfileScreen() {
     updateProfile(
       {
         username: formData.username.trim() || undefined,
-        firstName: formData.firstName.trim() || undefined,
         bio: formData.bio.trim() || undefined,
         age: formData.age ? parseInt(formData.age) : undefined,
-        avatar: formData.avatar || undefined,
         interests: formData.interests,
       },
       {
@@ -90,20 +87,6 @@ export default function EditProfileScreen() {
           />
         </View>
 
-        {/* First Name */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Имя</Text>
-          <TextInput
-            style={styles.input}
-            value={formData.firstName}
-            onChangeText={(firstName) =>
-              setFormData({ ...formData, firstName })
-            }
-            placeholder="Введите имя"
-            placeholderTextColor={colors.textSecondary}
-          />
-        </View>
-
         {/* Age */}
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Возраст</Text>
@@ -114,7 +97,7 @@ export default function EditProfileScreen() {
             placeholder="18"
             placeholderTextColor={colors.textSecondary}
             keyboardType="number-pad"
-            maxLength={2}
+            maxLength={3}
           />
         </View>
 

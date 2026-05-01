@@ -37,6 +37,7 @@
     "@nestjs/platform-express": "^11.1.9",
     "@nestjs/platform-socket.io": "^11.1.9",
     "@nestjs/schedule": "^6.1.1",
+    "@nestjs/serve-static": "^5.0.5",
     "@nestjs/throttler": "^6.5.0",
     "@nestjs/websockets": "^11.1.9",
     "@prisma/client": "^6.0.0",
@@ -44,7 +45,6 @@
     "@types/multer": "^2.0.0",
     "@types/nodemailer": "^7.0.4",
     "@types/passport-jwt": "^4.0.1",
-    "twilio": "^5.4.5",
     "apple-signin-auth": "^2.0.0",
     "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",
@@ -61,6 +61,7 @@
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "socket.io": "^4.8.1",
+    "twilio": "^5.4.5",
     "uuid": "^13.0.0"
   },
   "devDependencies": {

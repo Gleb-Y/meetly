@@ -27,14 +27,18 @@ const CATEGORIES = [
     label: "Вечеринка",
     color: "#8B5CF6",
   },
-  { key: "gym" as const, icon: "barbell", label: "Спорт", color: "#EF4444" },
+  { key: "sports" as const, icon: "barbell", label: "Спорт", color: "#EF4444" },
   {
-    key: "basketball" as const,
+    key: "hoops" as const,
     icon: "basketball",
     label: "Баскетбол",
     color: "#F97316",
   },
-  { key: "cocktail" as const, icon: "wine", label: "Бар", color: "#10B981" },
+  { key: "bar" as const, icon: "wine", label: "Бар", color: "#10B981" },
+  { key: "food" as const, icon: "restaurant", label: "Еда", color: "#F59E0B" },
+  { key: "music" as const, icon: "headset", label: "Музыка", color: "#EC4899" },
+  { key: "art" as const, icon: "brush", label: "Искусство", color: "#06B6D4" },
+  { key: "outdoor" as const, icon: "tent", label: "На улице", color: "#84CC16" },
 ];
 
 export function EventBasicInfoStep({ data, onUpdate, onNext }: Props) {

@@ -1,4 +1,4 @@
-export type UserInterest = "party" | "gym" | "basketball" | "cocktail";
+export type UserInterest = "food" | "sport" | "music" | "art" | "travel" | "photo" | "games" | "reading" | "cinema";
 
 export type UserProfile = {
   id: string;
@@ -14,10 +14,9 @@ export type UserProfile = {
 };
 
 export type UpdateProfileRequest = {
-  firstName?: string | null;
   username?: string | null;
-  avatar?: string | null;
   bio?: string | null;
   age?: number | null;
   interests?: UserInterest[];
+  // Note: avatar is uploaded separately via POST /users/me/avatar
 };

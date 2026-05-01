@@ -2,7 +2,7 @@ import { colors } from "@/src/shared/theme/colors";
 import React from "react";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 
-type Interest = "party" | "gym" | "basketball" | "cocktail";
+type Interest = "food" | "sport" | "music" | "art" | "travel" | "photo" | "games" | "reading" | "cinema";
 
 type Props = {
   selected: Interest[];
@@ -11,24 +11,49 @@ type Props = {
 
 const INTERESTS = [
   {
-    id: "party" as Interest,
-    label: "Вечеринки",
-    icon: require("@assets/images/map-icons/disco.png"),
-  },
-  {
-    id: "gym" as Interest,
+    id: "sport" as Interest,
     label: "Спорт",
     icon: require("@assets/images/map-icons/dumbbell.png"),
   },
   {
-    id: "basketball" as Interest,
-    label: "Баскетбол",
+    id: "food" as Interest,
+    label: "Еда",
+    icon: require("@assets/images/map-icons/disco.png"),
+  },
+  {
+    id: "games" as Interest,
+    label: "Игры",
     icon: require("@assets/images/map-icons/basketball.png"),
   },
   {
-    id: "cocktail" as Interest,
-    label: "Бары",
+    id: "music" as Interest,
+    label: "Музыка",
     icon: require("@assets/images/map-icons/cocktail.png"),
+  },
+  {
+    id: "travel" as Interest,
+    label: "Путешествия",
+    icon: undefined,
+  },
+  {
+    id: "art" as Interest,
+    label: "Искусство",
+    icon: undefined,
+  },
+  {
+    id: "photo" as Interest,
+    label: "Фотография",
+    icon: undefined,
+  },
+  {
+    id: "reading" as Interest,
+    label: "Чтение",
+    icon: undefined,
+  },
+  {
+    id: "cinema" as Interest,
+    label: "Кино",
+    icon: undefined,
   },
 ];
 
@@ -53,7 +78,11 @@ export function InterestsSelector({ selected, onChange }: Props) {
               onPress={() => toggleInterest(interest.id)}
               style={[styles.card, isSelected && styles.cardSelected]}
             >
-              <Image source={interest.icon} style={styles.icon} />
+              {interest.icon ? (
+                <Image source={interest.icon} style={styles.icon} />
+              ) : (
+                <Text style={styles.emoji}>✨</Text>
+              )}
               <Text style={[styles.text, isSelected && styles.textSelected]}>
                 {interest.label}
               </Text>
@@ -97,6 +126,9 @@ const styles = StyleSheet.create({
   icon: {
     width: 40,
     height: 40,
+  },
+  emoji: {
+    fontSize: 32,
   },
   text: {
     fontSize: 14,

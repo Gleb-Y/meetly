@@ -80,10 +80,15 @@ export class UsersController {
 
     const avatarUrl = await this.uploadService.uploadImage(file, 'avatars');
 
+    // Если это локальный файл, конвертируем в полный URL
+    const fullAvatarUrl = avatarUrl.startsWith('http')
+      ? avatarUrl
+      : `${process.env.API_URL || 'http://192.168.1.16:3000'}${avatarUrl}`;
+
     const { id, username, avatar, bio, age, interests } =
       await this.prisma.user.update({
         where: { id: user.id },
-        data: { avatar: avatarUrl },
+        data: { avatar: fullAvatarUrl },
         select: {
           id: true,
           username: true,
