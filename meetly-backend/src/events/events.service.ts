@@ -490,6 +490,8 @@ export class EventsService {
    * Организатор может вручную завершить событие (не ждать автоматического завершения)
    */
   async completeEvent(eventId: string, userId: string) {
+    this.logger.log(`📍 Completing event ${eventId} by user ${userId}`);
+    
     const event = await this.prisma.event.findUnique({
       where: { id: eventId },
       select: {
@@ -502,6 +504,8 @@ export class EventsService {
       },
     });
 
+    this.logger.log(`✅ Event found: ${JSON.stringify({ id: event?.id, status: event?.status })}`);
+
     if (!event) throw new NotFoundException('Event not found');
     if (event.creatorId !== userId)
       throw new ForbiddenException('Only creator can complete event');
@@ -509,11 +513,14 @@ export class EventsService {
       throw new BadRequestException('Only active events can be completed');
 
     // Изменяем статус на COMPLETED
+    this.logger.log(`🔄 Updating event status to COMPLETED...`);
     const updated = await this.prisma.event.update({
       where: { id: eventId },
       data: { status: EventStatus.COMPLETED },
       include: buildEventInclude(true),
     });
+    
+    this.logger.log(`✅ Event status updated`);
 
     // Отправляем уведомление в чат если он есть
     if (event.chat) {

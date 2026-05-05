@@ -33,6 +33,8 @@ export class EventSchedulerService {
    * Каждую минуту: ACTIVE → COMPLETED когда время ивента истекло.
    * Ивент пропадает с карты, но чек-ин ещё доступен 2 часа.
    * All-day: сравнение `date` с началом календарного дня в UTC (см. startOfDayUtc).
+   * 
+   * ⚠️ НЕ автоматически завершаем события без явного endTime - только с органайзером!
    */
   @Cron(CronExpression.EVERY_MINUTE)
   async handleExpiredEvents() {
@@ -47,13 +49,14 @@ export class EventSchedulerService {
           status: EventStatus.ACTIVE,
           isActive: true,
           OR: [
+            // Только события с явным endTime могут автоматически завершиться
             { endTime: { not: null, lt: now } },
+            // All-day события завершаются когда дата прошла
             {
               isAllDay: true,
               endTime: null,
               date: { lt: startOfDayUtc(now) },
             },
-            { isAllDay: false, endTime: null, date: { lt: now } },
           ],
         },
         select: {

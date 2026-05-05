@@ -9,7 +9,12 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "Требуется доступ к фотогалерее для загрузки аватара",
+        "NSPhotoLibraryAddOnlyUsageDescription": "Требуется доступ к фотогалерее для загрузки аватара",
+        "NSCameraUsageDescription": "Требуется доступ к камере для фото"
+      }
     },
     "android": {
       "adaptiveIcon": {

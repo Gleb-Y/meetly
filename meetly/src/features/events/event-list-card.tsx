@@ -9,22 +9,24 @@ type EventListCardProps = {
   onPress: (event: Event) => void;
 };
 
-const CATEGORY_CONFIG = {
+const CATEGORY_CONFIG: Record<string, { icon: string; color: string; label: string }> = {
   party: { icon: "musical-notes", color: "#8B5CF6", label: "Вечеринка" },
   gym: { icon: "barbell", color: "#EF4444", label: "Спорт" },
   basketball: { icon: "basketball", color: "#F97316", label: "Баскетбол" },
   cocktail: { icon: "wine", color: "#10B981", label: "Бар" },
-} as const;
+  hoops: { icon: "basketball", color: "#F97316", label: "Баскетбол" },
+};
 
 const CATEGORY_ICONS: Record<string, any> = {
   party: require("@assets/images/map-icons/disco.png"),
   gym: require("@assets/images/map-icons/dumbbell.png"),
   basketball: require("@assets/images/map-icons/basketball.png"),
   cocktail: require("@assets/images/map-icons/cocktail.png"),
+  hoops: require("@assets/images/map-icons/basketball.png"),
 };
 
 export function EventListCard({ event, onPress }: EventListCardProps) {
-  const config = CATEGORY_CONFIG[event.category];
+  const config = CATEGORY_CONFIG[event.category] || { icon: "help-circle", color: "#9CA3AF", label: event.category || "Событие" };
   const icon = CATEGORY_ICONS[event.category];
   const participantsCount = event.participants?.length || 0;
 

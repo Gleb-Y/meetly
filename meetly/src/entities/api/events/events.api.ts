@@ -8,9 +8,33 @@ import type {
   UpdateEventRequest,
 } from "./events.types";
 
+/**
+ * Преобразовать URL с неправильным IP на правильный
+ */
+function fixImageUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  
+  const baseUrl = process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000/api";
+  const apiBase = baseUrl.replace("/api", ""); // http://192.168.1.13:3000
+  
+  // Если URL содержит /uploads, заменить на правильный базовый URL
+  if (url.includes("/uploads")) {
+    const uploadPath = url.substring(url.indexOf("/uploads"));
+    return `${apiBase}${uploadPath}`;
+  }
+  
+  return url;
+}
+
 // 👇 Трансформирует ответ backend (новые названия) в формат frontend (старые названия)
 function transformEventResponse(data: any): Event {
   const visibility = data.visibility || "PUBLIC";
+  
+  // Фиксим аватар создателя события
+  if (data.creator && data.creator.avatar) {
+    data.creator.avatar = fixImageUrl(data.creator.avatar);
+  }
+  
   return {
     id: data.id,
     title: data.eventName,

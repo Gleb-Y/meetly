@@ -1,10 +1,7 @@
 import axios, { AxiosError, AxiosInstance } from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const USE_RAILWAY = false;
-const API_BASE_URL = USE_RAILWAY
-  ? "https://meetly-backend-production.up.railway.app/api"
-  : "http://192.168.1.16:3000/api";
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000/api";
 
 class ApiClient {
   private client: AxiosInstance;

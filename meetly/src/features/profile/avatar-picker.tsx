@@ -23,43 +23,63 @@ export function AvatarPicker({ avatar, onAvatarChange }: Props) {
   const uploadAvatarMutation = useUploadAvatar();
 
   const handlePickImage = async () => {
-    // Запрос разрешений
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert("Ошибка", "Нужно разрешение на доступ к галерее");
-      return;
-    }
-
-    // Выбор изображения
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
-
-    if (!result.canceled && result.assets[0]) {
-      const fileUri = result.assets[0].uri;
-
-      try {
-        console.log("📤 Uploading avatar:", fileUri);
-
-        // 🔥 Загружаем на сервер
-        const response = await uploadAvatarMutation.mutateAsync(fileUri);
-
-        console.log("✅ Avatar uploaded:", response.avatar);
-
-        // 👇 ОБНОВЛЯЕМ STATE В РОДИТЕЛЬСКОМ КОМПОНЕНТЕ
-        onAvatarChange(response.avatar);
-
-        Alert.alert("Успех! 🎉", "Аватар обновлен");
-      } catch (error: any) {
-        console.error("❌ Upload error:", error);
-        Alert.alert(
-          "Ошибка",
-          error.response?.data?.message || "Не удалось загрузить фото"
-        );
+    try {
+      // Запрос разрешений
+      console.log("🔍 Requesting media library permissions...");
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      console.log("📱 Permission status:", status);
+      
+      if (status !== "granted") {
+        Alert.alert("Ошибка", "Нужно разрешение на доступ к галерее. Проверьте настройки приложения.");
+        return;
       }
+
+      // Выбор изображения
+      console.log("📂 Launching image picker...");
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      console.log("📸 Image picker result:", {
+        canceled: result.canceled,
+        assetsCount: result.assets?.length,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        const fileUri = result.assets[0].uri;
+        console.log("✅ Image selected:", fileUri);
+
+        try {
+          console.log("📤 Uploading avatar:", fileUri);
+
+          // 🔥 Загружаем на сервер
+          const response = await uploadAvatarMutation.mutateAsync(fileUri);
+
+          console.log("✅ Avatar uploaded:", response.avatar);
+
+          // 👇 ОБНОВЛЯЕМ STATE В РОДИТЕЛЬСКОМ КОМПОНЕНТЕ
+          onAvatarChange(response.avatar);
+
+          Alert.alert("Успех! 🎉", "Аватар обновлен");
+        } catch (error: any) {
+          console.error("❌ Upload error:", error);
+          Alert.alert(
+            "Ошибка загрузки",
+            error.response?.data?.message || error.message || "Не удалось загрузить фото"
+          );
+        }
+      } else {
+        console.log("📸 Image picker was cancelled or no asset selected");
+      }
+    } catch (error: any) {
+      console.error("❌ Image picker error:", error);
+      Alert.alert(
+        "Ошибка",
+        error.message || "Не удалось открыть галерею"
+      );
     }
   };
 
