@@ -48,10 +48,16 @@ class SocketService {
       console.log("✅ Socket connected:", this.socket?.id);
     });
 
-    this.socket.on("connect_error", (error) => {
+    this.socket.on("connect_error", async (error) => {
       console.error("❌ Socket connection error:", error.message);
       console.error("📍 Socket URL:", socketUrl);
       console.error("🔍 Error details:", error);
+      
+      // Если токен невалидный, очищаем кэш
+      if (error.message === "timeout" || error.data?.content?.message === "Unauthorized") {
+        console.warn("⚠️  Clearing token cache due to auth error");
+        await AsyncStorage.removeItem("access_token");
+      }
     });
 
     this.socket.on("disconnect", (reason) => {

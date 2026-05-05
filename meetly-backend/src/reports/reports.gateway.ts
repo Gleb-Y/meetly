@@ -23,9 +23,10 @@ interface AuthenticatedSocket extends Socket {
 @WebSocketGateway({
   cors: { origin: '*', credentials: true },
   namespace: '/reports',
-  transports: ['websocket', 'polling'],
-  pingInterval: 25_000,
-  pingTimeout: 20_000,
+  transports: ['polling', 'websocket'],
+  pingInterval: 30000,
+  pingTimeout: 60000,
+  allowEIO3: true,
 })
 export class ReportsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()

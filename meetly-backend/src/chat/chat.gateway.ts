@@ -145,9 +145,10 @@ class OnlineTracker {
     credentials: true,
   },
   namespace: '/chat',
-  transports: ['websocket', 'polling'],
-  pingInterval: 25000,
-  pingTimeout: 20000,
+  transports: ['polling', 'websocket'], // Polling first (more reliable on mobile HTTP)
+  pingInterval: 30000,
+  pingTimeout: 60000, // Longer timeout for mobile networks
+  allowEIO3: true, // Support Socket.io v2 & v3
 })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
