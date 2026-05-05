@@ -133,8 +133,9 @@ export default function EventDetailScreen() {
           onPress: async () => {
             setIsCompleting(true);
             try {
+              const baseUrl = process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000/api";
               const response = await fetch(
-                `http://192.168.1.16:3000/api/events/${id}/complete`,
+                `${baseUrl}/events/${id}/complete`,
                 {
                   method: "POST",
                   headers: {

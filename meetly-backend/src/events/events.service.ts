@@ -490,7 +490,7 @@ export class EventsService {
    * Организатор может вручную завершить событие (не ждать автоматического завершения)
    */
   async completeEvent(eventId: string, userId: string) {
-    this.logger.log(`📍 Completing event ${eventId} by user ${userId}`);
+    this.logger.log(`📍 [1] Starting completeEvent for ${eventId}`);
     
     const event = await this.prisma.event.findUnique({
       where: { id: eventId },
@@ -503,8 +503,7 @@ export class EventsService {
         participants: { select: { userId: true } },
       },
     });
-
-    this.logger.log(`✅ Event found: ${JSON.stringify({ id: event?.id, status: event?.status })}`);
+    this.logger.log(`📍 [2] Event loaded: ${event?.id}`);
 
     if (!event) throw new NotFoundException('Event not found');
     if (event.creatorId !== userId)
@@ -512,25 +511,26 @@ export class EventsService {
     if (event.status !== EventStatus.ACTIVE)
       throw new BadRequestException('Only active events can be completed');
 
-    // Изменяем статус на COMPLETED
-    this.logger.log(`🔄 Updating event status to COMPLETED...`);
+    this.logger.log(`📍 [3] Updating event status to COMPLETED...`);
     const updated = await this.prisma.event.update({
       where: { id: eventId },
       data: { status: EventStatus.COMPLETED },
       include: buildEventInclude(true),
     });
-    
-    this.logger.log(`✅ Event status updated`);
+    this.logger.log(`📍 [4] Event status updated`);
 
     // Отправляем уведомление в чат если он есть
     if (event.chat) {
       try {
+        this.logger.log(`📍 [5] Broadcasting system message to chat ${event.chat.id}...`);
         await this.chatGateway.broadcastSystemMessage(
           event.chat.id,
           userId,
           'Событие завершено организатором. У вас есть 2 часа для отметки присутствия.',
         );
+        this.logger.log(`📍 [6] System message sent`);
 
+        this.logger.log(`📍 [7] Emitting chatStatusChanged...`);
         this.chatGateway.server
           .to(`chat:${event.chat.id}`)
           .emit('chatStatusChanged', {
@@ -538,6 +538,7 @@ export class EventsService {
             eventId: event.id,
             status: 'COMPLETED',
           });
+        this.logger.log(`📍 [8] chatStatusChanged emitted`);
       } catch (e) {
         this.logger.error(
           `Failed to notify chat for event ${eventId}: ${e.message}`,
@@ -545,8 +546,10 @@ export class EventsService {
       }
     }
 
-    // Уведомляем участников на фронтенде в реальном времени
+    this.logger.log(`📍 [9] Getting participant IDs...`);
     const participantIds = event.participants.map((p) => p.userId);
+    this.logger.log(`📍 [10] Participant count: ${participantIds.length}`);
+    
     if (participantIds.length > 0) {
       const socketPayload = {
         type: 'EVENT_COMPLETED_BY_ORGANIZER',
@@ -556,6 +559,7 @@ export class EventsService {
         timestamp: new Date().toISOString(),
       };
 
+      this.logger.log(`📍 [11] Sending notifications to participants...`);
       for (const participantId of participantIds) {
         this.notificationsGateway.sendToUser(
           participantId,
@@ -563,9 +567,12 @@ export class EventsService {
           socketPayload,
         );
       }
+      this.logger.log(`📍 [12] Notifications sent to all participants`);
     }
 
+    this.logger.log(`📍 [13] Calling sendProfileEventsUpdated...`);
     this.sendProfileEventsUpdated(userId);
+    this.logger.log(`📍 [14] Completed! Returning updated event`);
 
     return updated;
   }
